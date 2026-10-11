@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airbus Ship Detection | Machine Learning & Feature Engineering</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #0a101d;
+            --bg-card: #121b2d;
+            --bg-card-inner: #19253c;
+            --border-card: #233554;
+            --cyan: #38bdf8;
+            --cyan-glow: rgba(56, 189, 248, 0.25);
+            --ship-red: #f43f5e;
+            --ship-glow: rgba(244, 63, 94, 0.25);
+            --ocean-green: #10b981;
+            --ocean-glow: rgba(16, 185, 129, 0.25);
+            --text-heading: #ffffff;
+            --text-body: #cbd5e1;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--bg-body);
+            color: var(--text-body);
+            min-height: 100vh;
+            padding: 16px 24px 40px 24px;
+            overflow-x: hidden;
+        }
+
+        .app-wrapper {
+            max-width: 1320px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Top Header Navbar */
+        .navbar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .brand-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 0 14px var(--cyan-glow);
+        }
+
+        .brand-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-tags {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-tag {
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-card);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .header-tag.active {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: var(--ocean-green);
+        }
+
+        /* Main 2-Column Responsive Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 410px minmax(0, 1fr);
+            gap: 20px;
+            align-items: start;
+            width: 100%;
+        }
+
+        @media (max-width: 1050px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Container */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-badge {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Upload Dropzone */
+        .dropzone {
+            border: 2px dashed rgba(56, 189, 248, 0.35);
+            border-radius: 12px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            background: rgba(56, 189, 248, 0.03);
+            transition: all 0.2s;
+        }
+
+        .dropzone:hover {
+            border-color: var(--cyan);
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .dropzone input {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .drop-icon { font-size: 22px; margin-bottom: 4px; }
+        .drop-text { font-size: 13px; font-weight: 700; color: #fff; }
+        .drop-sub { font-size: 11px; color: var(--text-muted); }
+
+        /* Selected Tile Preview */
+        .tile-preview {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-card-inner);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 12px;
+        }
+
+        .preview-thumbnail {
+            width: 54px;
+            height: 54px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1.5px solid var(--cyan);
+        }
+
+        .tile-info h5 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            word-break: break-all;
+        }
+
+        .tile-info p {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 2px;
+        }
+
+        /* Preset Samples Grid (4 columns, 2 rows) */
+        .sample-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 14px 0 8px 0;
+        }
+
+        .sample-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .sample-item {
+            background: var(--bg-card-inner);
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            padding: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .sample-item:hover, .sample-item.active {
+            border-color: var(--cyan);
+            background: rgba(56, 189, 248, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .sample-item img {
+            width: 100%;
+            height: 42px;
+            border-radius: 4px;
+            object-fit: cover;
+            margin-bottom: 2px;
+        }
+
+        .sample-tag {
+            font-size: 9px;
+            font-weight: 700;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sample-item.is-ship .sample-tag { color: #fda4af; }
+        .sample-item.is-ocean .sample-tag { color: #6ee7b7; }
+
+        /* Run Inference Button */
+        .btn-analyze {
+            width: 100%;
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0284c7, #0ea5e9);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px var(--cyan-glow);
+            transition: all 0.2s;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+        }
+
+        /* Benchmark Ablation Table */
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .benchmark-table th {
+            text-align: center;
+            padding: 6px 4px;
+            background: var(--bg-card-inner);
+            color: var(--text-muted);
+            font-weight: 700;
+            border: 1px solid var(--border-card);
+        }
+
+        .benchmark-table td {
+            text-align: center;
+            padding: 6px 4px;
+            border: 1px solid var(--border-card);
+            color: var(--text-body);
+        }
+
+        .benchmark-table td.model-col { text-align: left; font-weight: 700; color: #fff; padding-left: 8px; }
+        .benchmark-table td.highlight { color: var(--ocean-green); font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+
+        /* ================= RIGHT COLUMN ================= */
+
+        /* Verdict Hero Banner */
+        .verdict-banner {
+            border-radius: 14px;
+            padding: 18px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .verdict-banner.ship {
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.18) 0%, rgba(18, 27, 45, 0.95) 100%);
+            border-color: var(--ship-red);
+            box-shadow: 0 6px 20px var(--ship-glow);
+        }
+
+        .verdict-banner.no-ship {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(18, 27, 45, 0.95) 100%);
+            border-color: var(--ocean-green);
+            box-shadow: 0 6px 20px var(--ocean-glow);
+        }
+
+        .verdict-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .verdict-badge-icon {
+            font-size: 26px;
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .verdict-banner.ship .verdict-badge-icon { background: rgba(244, 63, 94, 0.2); }
+        .verdict-banner.no-ship .verdict-badge-icon { background: rgba(16, 185, 129, 0.2); }
+
+        .verdict-status-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .verdict-status-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .verdict-score-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+        }
+
+        /* Model Meters Grid (3 columns on desktop) */
+        .models-meters-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        @media (max-width: 900px) {
+            .models-meters-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .meter-box {
+            background: var(--bg-card-inner);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .meter-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .meter-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .meter-val {
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .meter-track {
+            height: 5px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Visual Channels Inspection Grid (4 images) */
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .channel-tile {
+            background: var(--bg-card-inner);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .channel-tile img {
+            width: 100%;
+            height: 90px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 6px;
+        }
+
+        .channel-tile-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .channel-tile-sub {
+            font-size: 9px;
+            color: var(--text-muted);
+        }
+
+        /* Feature Charts (2 top charts + 1 bottom chart) */
+        .charts-row-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 800px) {
+            .charts-row-split { grid-template-columns: 1fr; }
+        }
+
+        .chart-panel {
+            background: var(--bg-card-inner);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 12px;
+            height: 190px;
+            position: relative;
+        }
+
+        .chart-panel-wide {
+            background: var(--bg-card-inner);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 12px;
+            height: 140px;
+            position: relative;
+        }
+
+        .chart-header-mini {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .chart-title-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .chart-dim-badge {
+            font-size: 9px;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--cyan);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .chart-canvas-box {
+            position: relative;
+            height: calc(100% - 24px);
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        
+        <!-- Header Bar -->
+        <header class="navbar">
+            <div class="brand-area">
+                <div class="brand-logo">🛰️</div>
+                <div>
+                    <h1 class="brand-title">Airbus Ship Detection</h1>
+                    <p class="brand-subtitle">UE24CS352A • Machine Learning Mini-Project • Serial No. 35</p>
+                </div>
+            </div>
+            <div class="header-tags">
+                <div class="header-tag">100% RF Accuracy</div>
+                <div class="header-tag">531 D Features</div>
+                <div class="header-tag active">
+                    <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--ocean-green); margin-right:4px;"></span>
+                    Live Engine Ready
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace Grid -->
+        <main class="main-grid">
+            
+            <!-- LEFT COLUMN: Image Input, Sample Selector & Benchmarks -->
+            <div>
+                <!-- Input Card -->
+                <section class="card">
+                    <div class="card-header">
+                        <div class="card-title">📡 Satellite Tile Input</div>
+                        <div class="card-badge">256 × 256 RGB</div>
+                    </div>
+
+                    <!-- Dropzone -->
+                    <div class="dropzone">
+                        <input type="file" id="fileInput" accept="image/*">
+                        <div class="drop-icon">🌊</div>
+                        <div class="drop-text">Upload Satellite Image Tile</div>
+                        <div class="drop-sub">Drag & drop PNG/JPG or click to browse</div>
+                    </div>
+
+                    <!-- Selected Tile Preview -->
+                    <div class="tile-preview" id="previewBox">
+                        <img id="previewImg" class="preview-thumbnail" src="/data/sample_dataset/ships/ship_0000.png" alt="Selected Tile">
+                        <div class="tile-info">
+                            <h5 id="previewTitle">ship_0000.png</h5>
+                            <p>Target: 256×256 px • RGB Tile</p>
+                        </div>
+                    </div>
+
+                    <!-- Preset Samples (4x2 Grid) -->
+                    <div class="sample-label">Or Select Preset Benchmark Tile:</div>
+                    <div class="sample-grid" id="sampleGrid">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
+                    <!-- Run Analysis Button -->
+                    <button class="btn-analyze" id="btnAnalyze" onclick="executeInference()">
+                        <span>⚡ Run Feature Extraction & Model Inference</span>
+                    </button>
+                </section>
+
+                <!-- Benchmark Summary Card (Table 1) -->
+                <section class="card">
+                    <div class="card-header">
+                        <div class="card-title">📊 CS229 Table 1 Benchmark</div>
+                        <div class="card-badge">Ablation Study</div>
+                    </div>
+                    <table class="benchmark-table">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>His</th>
+                                <th>Ha</th>
+                                <th>Hu</th>
+                                <th>w/ All</th>
+                                <th>w/o</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="model-col">Random Forest</td>
+                                <td>100%</td>
+                                <td>100%</td>
+                                <td>80%</td>
+                                <td class="highlight">100.0%</td>
+                                <td>72.0%</td>
+                            </tr>
+                            <tr>
+                                <td class="model-col">SVM (RBF)</td>
+                                <td>64%</td>
+                                <td>100%</td>
+                                <td>80%</td>
+                                <td class="highlight">88.0%</td>
+                                <td>68.0%</td>
+                            </tr>
+                            <tr>
+                                <td class="model-col">KNN (k=5)</td>
+                                <td>64%</td>
+                                <td>100%</td>
+                                <td>80%</td>
+                                <td class="highlight">92.0%</td>
+                                <td>72.0%</td>
+                            </tr>
+                            <tr>
+                                <td class="model-col">LDA</td>
+                                <td>68%</td>
+                                <td>100%</td>
+                                <td>76%</td>
+                                <td class="highlight">88.0%</td>
+                                <td>56.0%</td>
+                            </tr>
+                            <tr>
+                                <td class="model-col">Naive Bayes</td>
+                                <td>84%</td>
+                                <td>100%</td>
+                                <td>56%</td>
+                                <td class="highlight">84.0%</td>
+                                <td>32.0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+
+            <!-- RIGHT COLUMN: AI Inference & Deep Diagnostics Dashboard -->
+            <div>
+                <!-- Verdict Hero Banner -->
+                <div class="verdict-banner ship" id="verdictBanner">
+                    <div class="verdict-left">
+                        <div class="verdict-badge-icon" id="verdictIcon">🚢</div>
+                        <div>
+                            <div class="verdict-status-sub">AI Ensemble Verdict</div>
+                            <div class="verdict-status-title" id="verdictTitle">Ship Vessel Detected</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="verdict-score-num" id="verdictScore">95.7%</div>
+                        <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Vessel Confidence</div>
+                    </div>
+                </div>
+
+                <!-- Multi-Model Meters -->
+                <section class="card">
+                    <div class="card-header">
+                        <div class="card-title">🤖 Multi-Classifier Confidence Meters</div>
+                        <div class="card-badge">6 Evaluated Models</div>
+                    </div>
+                    <div class="models-meters-grid" id="metersGrid">
+                        <!-- Populated via JS -->
+                    </div>
+                </section>
+
+                <!-- Deep Feature Extraction Visualizer -->
+                <section class="card">
+                    <div class="card-header">
+                        <div class="card-title">🔬 Extracted Feature Signatures & Visual Maps</div>
+                        <div class="card-badge">531 Total Dimensions</div>
+                    </div>
+
+                    <!-- 4 Inspection Tiles -->
+                    <div class="channels-grid">
+                        <div class="channel-tile">
+                            <img id="mapOriginal" src="/data/sample_dataset/ships/ship_0000.png" alt="Original">
+                            <div class="channel-tile-title">Original RGB</div>
+                            <div class="channel-tile-sub">Input Satellite Tile</div>
+                        </div>
+                        <div class="channel-tile">
+                            <img id="mapGrayscale" src="/data/sample_dataset/ships/ship_0000.png" alt="Grayscale">
+                            <div class="channel-tile-title">Grayscale Contour</div>
+                            <div class="channel-tile-sub">Hu Moments Base</div>
+                        </div>
+                        <div class="channel-tile">
+                            <img id="mapHsv" src="/data/sample_dataset/ships/ship_0000.png" alt="HSV">
+                            <div class="channel-tile-title">HSV Color Space</div>
+                            <div class="channel-tile-sub">Spectral Space (512 D)</div>
+                        </div>
+                        <div class="channel-tile">
+                            <img id="mapEdges" src="/data/sample_dataset/ships/ship_0000.png" alt="Edges">
+                            <div class="channel-tile-title">Spatial Gradient</div>
+                            <div class="channel-tile-sub">Haralick GLCM Base</div>
+                        </div>
+                    </div>
+
+                    <!-- Split Charts: Hu Moments & Haralick Textures -->
+                    <div class="charts-row-split">
+                        <div class="chart-panel">
+                            <div class="chart-header-mini">
+                                <span class="chart-title-text">Hu Invariant Moments (Shape)</span>
+                                <span class="chart-dim-badge">7 Invariants</span>
+                            </div>
+                            <div class="chart-canvas-box">
+                                <canvas id="huChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-panel">
+                            <div class="chart-header-mini">
+                                <span class="chart-title-text">Haralick GLCM Texture Stats</span>
+                                <span class="chart-dim-badge">12 Statistics</span>
+                            </div>
+                            <div class="chart-canvas-box">
+                                <canvas id="haChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wide Chart: HSV Color Distribution -->
+                    <div class="chart-panel-wide">
+                        <div class="chart-header-mini">
+                            <span class="chart-title-text">HSV 3D Color Histogram Distribution Profile</span>
+                            <span class="chart-dim-badge">Quantized Spectral Bins</span>
+                        </div>
+                        <div class="chart-canvas-box">
+                            <canvas id="histChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- JavaScript Execution Logic -->
+    <script>
+        let currentFile = null;
+        let currentUrl = null;
+        let huChart = null, haChart = null, histChart = null;
+
+        // Load Preset Samples into the 4x2 Grid
+        async function initPresetSamples() {
+            try {
+                const res = await fetch('/api/samples');
+                const data = await res.json();
+                const container = document.getElementById('sampleGrid');
+                container.innerHTML = '';
+
+                data.samples.slice(0, 8).forEach((s, idx) => {
+                    const isShip = s.category === 'Ship';
+                    const item = document.createElement('div');
+                    item.className = `sample-item ${isShip ? 'is-ship' : 'is-ocean'} ${idx === 0 ? 'active' : ''}`;
+                    item.innerHTML = `
+                        <img src="${s.url}" alt="${s.name}">
+                        <span class="sample-tag">${isShip ? '🚢 Ship' : '🌊 Ocean'} #${idx+1}</span>
+                    `;
+                    item.onclick = () => chooseTile(s.url, s.name, item);
+                    container.appendChild(item);
+                });
+
+                // Auto-run first sample
+                if (data.samples.length > 0) {
+                    chooseTile(data.samples[0].url, data.samples[0].name, container.children[0]);
+                }
+            } catch (e) {
+                console.error("Error loading preset samples", e);
+            }
+        }
+
+        function chooseTile(url, name, element) {
+            document.querySelectorAll('.sample-item').forEach(el => el.classList.remove('active'));
+            if (element) element.classList.add('active');
+
+            currentUrl = url;
+            currentFile = null;
+
+            document.getElementById('previewImg').src = url;
+            document.getElementById('previewTitle').innerText = name;
+
+            executeInference();
+        }
+
+        // File upload listener
+        const fileInput = document.getElementById('fileInput');
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                document.querySelectorAll('.sample-item').forEach(el => el.classList.remove('active'));
+                currentFile = e.target.files[0];
+                currentUrl = null;
+
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    document.getElementById('previewImg').src = re.target.result;
+                    document.getElementById('previewTitle').innerText = currentFile.name;
+                };
+                reader.readAsDataURL(currentFile);
+                executeInference();
+            }
+        });
+
+        // Run Inference
+        async function executeInference() {
+            const btn = document.getElementById('btnAnalyze');
+            btn.innerHTML = '<span>⏳ Extracting & Classifying...</span>';
+            btn.disabled = true;
+
+            try {
+                let response;
+                if (currentFile) {
+                    const formData = new FormData();
+                    formData.append('file', currentFile);
+                    response = await fetch('/api/predict', { method: 'POST', body: formData });
+                } else if (currentUrl) {
+                    response = await fetch('/api/predict', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image_url: currentUrl })
+                    });
+                } else {
+                    return;
+                }
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    displayInference(result);
+                } else {
+                    alert("Analysis error: " + result.error);
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                btn.innerHTML = '<span>⚡ Run Feature Extraction & Model Inference</span>';
+                btn.disabled = false;
+            }
+        }
+
+        // Display results in UI
+        function displayInference(res) {
+            // 1. Verdict Banner
+            const banner = document.getElementById('verdictBanner');
+            banner.className = `verdict-banner ${res.is_ship ? 'ship' : 'no-ship'}`;
+            document.getElementById('verdictIcon').innerText = res.is_ship ? '🚢' : '🌊';
+            document.getElementById('verdictTitle').innerText = res.final_prediction;
+            document.getElementById('verdictScore').innerText = `${res.consensus_probability}%`;
+
+            // 2. Model Confidence Meters
+            const metersGrid = document.getElementById('metersGrid');
+            metersGrid.innerHTML = '';
+
+            for (const [name, data] of Object.entries(res.model_predictions)) {
+                const fillCol = data.probability >= 50 ? 'var(--ship-red)' : 'var(--ocean-green)';
+                const card = document.createElement('div');
+                card.className = 'meter-box';
+                card.innerHTML = `
+                    <div class="meter-top">
+                        <span class="meter-name" title="${name}">${name}</span>
+                        <span class="meter-val" style="color:${fillCol}">${data.probability}%</span>
+                    </div>
+                    <div class="meter-track">
+                        <div class="meter-fill" style="width:${data.probability}%; background:${fillCol}"></div>
+                    </div>
+                `;
+                metersGrid.appendChild(card);
+            }
+
+            // 3. Visual Channel Maps
+            if (res.feature_data && res.feature_data.visual_maps) {
+                const m = res.feature_data.visual_maps;
+                document.getElementById('mapOriginal').src = m.original;
+                document.getElementById('mapGrayscale').src = m.grayscale;
+                document.getElementById('mapHsv').src = m.hsv;
+                document.getElementById('mapEdges').src = m.edges;
+            }
+
+            // 4. Feature Charts
+            drawFeatureCharts(res.feature_data);
+        }
+
+        function drawFeatureCharts(feat) {
+            // Hu Moments Chart
+            const ctxHu = document.getElementById('huChart').getContext('2d');
+            if (huChart) huChart.destroy();
+            huChart = new Chart(ctxHu, {
+                type: 'bar',
+                data: {
+                    labels: ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7'],
+                    datasets: [{
+                        data: feat.hu_moments,
+                        backgroundColor: '#38bdf8',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.06)' } }
+                    }
+                }
+            });
+
+            // Haralick Textures Chart
+            const ctxHa = document.getElementById('haChart').getContext('2d');
+            if (haChart) haChart.destroy();
+            haChart = new Chart(ctxHa, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(feat.haralick_textures),
+                    datasets: [{
+                        data: Object.values(feat.haralick_textures),
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', font: { size: 8 } }, grid: { display: false } },
+                        y: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.06)' } }
+                    }
+                }
+            });
+
+            // Color Histogram Chart
+            const ctxHist = document.getElementById('histChart').getContext('2d');
+            if (histChart) histChart.destroy();
+            histChart = new Chart(ctxHist, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: feat.color_histogram_sample.length}, (_, i) => `B${i+1}`),
+                    datasets: [{
+                        data: feat.color_histogram_sample,
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 1.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { display: false }, grid: { display: false } },
+                        y: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.06)' } }
+                    }
+                }
+            });
+        }
+
+        // Auto load on ready
+        window.addEventListener('DOMContentLoaded', () => {
+            initPresetSamples();
+        });
+    </script>
+</body>
+</html>

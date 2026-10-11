@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+data/subset_6000/
+data/airbus_dataset/
+data/*.npz
+models/*.pth
+models/cnn_results.json
+models/cnn_training_curves.png
