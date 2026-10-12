@@ -50,30 +50,35 @@ We implemented five baseline algorithms:
 
 ## 4. Experimental Results & Discussion
 
-### 4.1 Feature Engineering Ablation Study (Test Accuracy)
+### 4.1 Feature Engineering Ablation Study (Airbus 6,000-image subset)
 
-| Algorithm | Color Hist ($\text{His}$) | Haralick ($\text{Ha}$) | Hu Moments ($\text{Hu}$) | $\text{His} + \text{Ha}$ | $\text{Ha} + \text{Hu}$ | $\text{Hu} + \text{His}$ | All Features | Raw Pixels ($\text{w/o}$) |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Random Forest (RF)** | 100.0% | 100.0% | 80.0% | 100.0% | 100.0% | 96.0% | **100.0%** | 72.0% |
-| **SVM (RBF)** | 64.0% | 100.0% | 80.0% | 88.0% | 100.0% | 76.0% | **88.0%** | 68.0% |
-| **KNN** | 64.0% | 100.0% | 80.0% | 92.0% | 100.0% | 84.0% | **92.0%** | 72.0% |
-| **LDA** | 68.0% | 100.0% | 76.0% | 80.0% | 100.0% | 56.0% | **88.0%** | 56.0% |
-| **Gaussian NB** | 84.0% | 100.0% | 56.0% | 84.0% | 96.0% | 84.0% | **84.0%** | 32.0% |
+The experiment used 4,000 training images, 1,000 validation images, and 1,000 held-out test images. The test set contained 160 ships and 840 no-ship images.
 
-### 4.2 10-Fold Stratified Cross-Validation
-- **Random Forest:** $99.23\% \pm 2.31\%$ (Precision: $100.0\%$, Recall: $98.0\%$)
-- **SVM (RBF):** $97.56\% \pm 3.72\%$ (Precision: $100.0\%$, Recall: $94.0\%$)
-- **KNN ($k=5$):** $95.96\% \pm 5.50\%$ (Precision: $98.0\%$, Recall: $92.0\%$)
-- **Naive Bayes:** $74.17\% \pm 9.29\%$
-- **LDA:** $72.05\% \pm 12.01\%$
+| Algorithm | His | Ha | Hu | His+Ha | Ha+Hu | Hu+His | All | Raw |
+|:---|---:|---:|---:|---:|---:|---:|---:|---:|
+| LDA | 84.4% | 84.3% | 84.0% | 86.0% | 84.5% | 84.0% | 85.5% | 66.5% |
+| KNN | 85.1% | 87.1% | 81.0% | 86.9% | 85.3% | 83.7% | 86.5% | 82.8% |
+| Naive Bayes | 33.7% | 70.6% | 16.3% | 33.8% | 19.7% | 33.9% | 33.9% | 46.5% |
+| Random Forest | 91.4% | 87.4% | 83.9% | **91.6%** | 88.0% | 91.2% | 91.3% | 84.7% |
+| SVM | 85.1% | 86.5% | 84.0% | 85.4% | 86.1% | 85.2% | 85.5% | 83.9% |
+
+### 4.2 10-Fold Stratified Cross-Validation on Training Data
+
+- **Random Forest:** $91.97\% \pm 1.08\%$ (Precision: $88.13\%$, Recall: $57.81\%$, F1: $69.67\%$)
+- **KNN:** $85.72\% \pm 1.43\%$ (Precision: $59.24\%$, Recall: $34.53\%$, F1: $43.27\%$)
+- **SVM:** $84.85\% \pm 0.49\%$ (Precision: $80.54\%$, Recall: $7.97\%$, F1: $14.28\%$)
+- **LDA:** $84.10\% \pm 0.91\%$ (Precision: $51.30\%$, Recall: $36.09\%$, F1: $41.24\%$)
+- **Naive Bayes:** $36.95\% \pm 1.58\%$ (Precision: $19.17\%$, Recall: $91.41\%$, F1: $31.68\%$)
 
 ### 4.3 Key Findings
-1. **Feature Engineering Superiority:** Hand-engineered features substantially boost model accuracy (Random Forest improves from $72.0\%$ on raw pixels to $100.0\%$ on texture/color features; Naive Bayes jumps from $32.0\%$ to $84.0\%$).
-2. **Haralick Texture Dominance:** Haralick GLCM features proved most informative, effectively isolating structural ship edges from uniform ocean waves.
-3. **Threshold Tuning for Imbalance:** Moving decision thresholds from default $0.5$ down to $0.3$ on imbalanced test distributions yielded significant gains in sensitivity and F1-score.
+
+1. Random Forest achieved the best held-out accuracy, reaching 91.6% with color plus Haralick texture features.
+2. Raw pixel features performed worse than engineered features for Random Forest, falling from 91.6% with His+Ha to 84.7%.
+3. Accuracy alone is misleading for this imbalanced task. Random Forest recall was 54.37% with the all-feature model, so precision, recall, and F1 are reported alongside accuracy.
+4. Threshold scanning on the validation set selected 0.35 for Random Forest, improving validation F1 to 0.7898. This threshold was selected before final test reporting.
 
 ---
 
 ## 5. Conclusions & Future Work
-- **Summary:** Random Forest with engineered Haralick and Color Histogram features demonstrates state-of-the-art performance, matching or exceeding custom CNN backbones on compact tile datasets while maintaining real-time inference speed ($< 5\text{ ms}$ per patch).
-- **Future Directions:** Incorporating Bag-of-Visual-Words ($\text{BoVW}$) with dense SIFT descriptors, and extending classification into bounding-box localization via U-Net or YOLO segmentation.
+- **Summary:** On the selected Airbus subset, Random Forest with color and Haralick features provided the strongest traditional-ML result. The results demonstrate the value of feature engineering while also showing that class imbalance makes recall and F1 essential metrics.
+- **Future Directions:** Compare these results with the Simple CNN and DenseNet-169, tune class weighting, and extend the task toward ship localization or segmentation.

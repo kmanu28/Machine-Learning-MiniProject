@@ -108,20 +108,25 @@ Open your browser at **`http://127.0.0.1:5000`**. You can:
 
 ## 📊 Experimental Results
 
-### Table 1: Test Accuracy Comparison across Feature Sets
-| Algorithm | Color Hist ($\text{His}$) | Haralick ($\text{Ha}$) | Hu Moments ($\text{Hu}$) | $\text{His} + \text{Ha}$ | $\text{Ha} + \text{Hu}$ | $\text{Hu} + \text{His}$ | w/ All Features | Raw Pixels ($\text{w/o}$) |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Random Forest (RF)** | 100.0% | 100.0% | 80.0% | 100.0% | 100.0% | 96.0% | **100.0%** | 72.0% |
-| **SVM (RBF)** | 64.0% | 100.0% | 80.0% | 88.0% | 100.0% | 76.0% | **88.0%** | 68.0% |
-| **KNN ($k=5$)** | 64.0% | 100.0% | 80.0% | 92.0% | 100.0% | 84.0% | **92.0%** | 72.0% |
-| **LDA** | 68.0% | 100.0% | 76.0% | 80.0% | 100.0% | 56.0% | **88.0%** | 56.0% |
-| **Naive Bayes** | 84.0% | 100.0% | 56.0% | 84.0% | 96.0% | 84.0% | **84.0%** | 32.0% |
+### Table 1: Held-out test accuracy on the Airbus 6,000-image subset
 
-### 10-Fold Stratified Cross-Validation Summary
-- **Random Forest:** $99.23\% \pm 2.31\%$ (Precision: $100\%$, Recall: $98.0\%$)
-- **Support Vector Machine (RBF):** $97.56\% \pm 3.72\%$ (Precision: $100\%$, Recall: $94.0\%$)
-- **K-Nearest Neighbors ($k=5$):** $95.96\% \pm 5.50\%$ (Precision: $98.0\%$, Recall: $92.0\%$)
-- **Deep MLP Neural Network:** $96.00\%$ validation accuracy
+| Algorithm | His | Ha | Hu | His+Ha | Ha+Hu | Hu+His | All | Raw |
+|:---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **LDA** | 84.4% | 84.3% | 84.0% | 86.0% | 84.5% | 84.0% | 85.5% | 66.5% |
+| **KNN** | 85.1% | 87.1% | 81.0% | 86.9% | 85.3% | 83.7% | 86.5% | 82.8% |
+| **Naive Bayes** | 33.7% | 70.6% | 16.3% | 33.8% | 19.7% | 33.9% | 33.9% | 46.5% |
+| **Random Forest** | 91.4% | 87.4% | 83.9% | **91.6%** | 88.0% | 91.2% | 91.3% | 84.7% |
+| **SVM** | 85.1% | 86.5% | 84.0% | 85.4% | 86.1% | 85.2% | 85.5% | 83.9% |
+
+### 10-Fold Stratified Cross-Validation
+
+- **Random Forest:** 91.97% ± 1.08% accuracy; precision 88.13%, recall 57.81%, F1 69.67%
+- **KNN:** 85.72% ± 1.43% accuracy; precision 59.24%, recall 34.53%, F1 43.27%
+- **SVM:** 84.85% ± 0.49% accuracy; precision 80.54%, recall 7.97%, F1 14.28%
+- **LDA:** 84.10% ± 0.91% accuracy; precision 51.30%, recall 36.09%, F1 41.24%
+- **Naive Bayes:** 36.95% ± 1.58% accuracy; precision 19.17%, recall 91.41%, F1 31.68%
+
+Random Forest with His+Ha features produced the best held-out accuracy. The validation threshold scan selected 0.35 and achieved F1 = 0.7898.
 
 ---
 
