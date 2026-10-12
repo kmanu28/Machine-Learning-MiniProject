@@ -76,6 +76,10 @@ Run the fixed-split traditional-ML experiment:
 python scripts/run_subset_experiment.py --data-dir data/subset_6000
 ```
 
+For the original ZIP download, use the ZIP-aware version so the full archive is not extracted:
+```bash
+python scripts/prepare_subset_from_zip.py --zip C:\path\to\airbus-ship-detection.zip --output data\subset_6000
+```
 ### 3. Run Complete Training & Benchmarking Pipeline
 To run the ablation study across all 8 feature combinations and 10-fold cross-validation:
 ```bash
