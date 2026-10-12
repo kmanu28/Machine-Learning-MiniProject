@@ -132,6 +132,7 @@ Random Forest with His+Ha features produced the best held-out accuracy. The vali
 
 ## 📄 Deliverables Summary
 1. **Source Code:** Complete modular Python codebase in `src/`, `models/`, and `app.py`.
-2. **Two-Page Write-up:** Available in [`report/writeup.pdf`](report/writeup.pdf) and [`report/writeup.md`](report/writeup.md).
-3. **Presentation Deck:** Available in [`report/presentation_slides.md`](report/presentation_slides.md).
-4. **Live Demonstration:** Interactive Web Dashboard running via `python app.py`.
+2. **Colab Notebook:** Run [Airbus_Ship_Detection_Colab_Complete.ipynb](notebooks/Airbus_Ship_Detection_Colab_Complete.ipynb) to train and evaluate both CNNs using the Drive subset.
+3. **Two-Page Write-up:** Available in [`report/writeup.pdf`](report/writeup.pdf) and [`report/writeup.md`](report/writeup.md).
+4. **Presentation Deck:** Available in [`report/presentation_slides.md`](report/presentation_slides.md).
+5. **Live Demonstration:** Interactive Web Dashboard running via `python app.py`.
