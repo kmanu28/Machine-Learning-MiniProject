@@ -126,7 +126,7 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
           "2. <b>Color Histograms (His - 512 dims):</b> 3D HSV histogram (8 bins/channel) capturing spectral differences between vessel hulls, wakes, and water.<br/>"
           "3. <b>Haralick Textures (Ha - 12 dims):</b> Gray-Level Co-occurrence Matrix (GLCM) metrics (Contrast, Dissimilarity, Homogeneity, Energy, Correlation, ASM) capturing high-frequency ship edges.<br/>"
           "<b>Deep Learning:</b> <i>SIM-CNN</i> (4 Conv+BN+ReLU+MaxPool layers trained from scratch) and <i>TL-CNN</i> (ImageNet pretrained DenseNet-169 backbone with custom classification head).<br/>"
-          "<b>Proposed CPU Method:</b> <i>HFSD</i> fuses the global descriptors with compact HOG and 4x4 spatial HSV statistics, then blends HistGradientBoosting, balanced Random Forest, and class-balanced logistic regression.")
+          "<b>Proposed CPU Method:</b> <i>HFSD-Pro</i> adds multi-scale HOG, local LBP/contrast statistics, HSV quantiles, and validation-tuned blending to the global descriptors, then uses HistGradientBoosting and balanced Random Forest models.")
     elements.append(Paragraph(p3, body_style))
     elements.append(Spacer(1, 6))
 
@@ -203,7 +203,7 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
     # --- Section 5: Decision Threshold Scanning ---
     elements.append(Paragraph("4.3 Decision Threshold Optimization for Imbalanced Data", h1_style))
     p5 = ("Due to maritime class imbalance, shifting the decision threshold from the default 0.5 down to 0.3-0.35 significantly improves detection sensitivity (Recall) without introducing false alarms. "
-          "Random Forest reached validation F1 = 0.7898 at threshold 0.35. The proposed HFSD selected threshold 0.28 and achieved test accuracy 90.4%, recall 79.4%, F1 72.6%, and ROC-AUC 92.9%.")
+          "Random Forest reached validation F1 = 0.7898 at threshold 0.35. HFSD-Pro selected threshold 0.40 and achieved test accuracy 92.0%, recall 77.5%, F1 75.6%, and ROC-AUC 93.9% using CPU-only features and inference.")
     elements.append(Paragraph(p5, body_style))
     elements.append(Spacer(1, 6))
 
@@ -211,7 +211,7 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
     elements.append(Paragraph("5. Conclusions & Project Deliverables", h1_style))
     p6 = ("1. <b>Feature Engineering Impact:</b> Hand-crafted GLCM texture and HSV color features drastically improve non-neural ML performance, outperforming raw pixel classifiers by over 28%.<br/>"
           "2. <b>Classifier Comparison:</b> Random Forest reached 91.6% held-out accuracy, while DenseNet-169 reached 92.9% accuracy and F1 74.7%.<br/>"
-          "3. <b>CPU Contribution:</b> HFSD combines multiple complementary descriptors and improves ship recall to 79.4% without CUDA; its extracted features are cached for fast repeated runs.<br/>"
+          "3. <b>CPU Contribution:</b> HFSD-Pro combines multiple complementary descriptors and improves the measured F1-score to 75.6% and ship recall to 77.5% without CUDA; its extracted features are cached for fast repeated runs.<br/>"
           "4. <b>Interactive Web Dashboard:</b> A live demonstration dashboard was developed allowing real-time tile upload, instant feature extraction visualization, and multi-model consensus prediction.")
     elements.append(Paragraph(p6, body_style))
 

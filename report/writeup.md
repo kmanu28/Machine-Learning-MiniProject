@@ -63,6 +63,13 @@ selected threshold of 0.28. At the default 0.50 threshold it achieved 91.8%
 accuracy and 71.9% F1. The selected lower threshold favors detection recall,
 which is appropriate because ship images are the minority class.
 
+We then tuned HFSD-Pro using multi-scale HOG, local LBP/contrast statistics,
+HSV quantiles, and validation-only ensemble selection. HFSD-Pro achieved
+92.0% test accuracy, 73.8% precision, 77.5% recall, 75.6% F1, and 93.9%
+ROC-AUC at threshold 0.40. It is the strongest CPU-only method in this
+experiment and exceeds DenseNet-169 on F1 and recall, while DenseNet-169
+retains the highest raw accuracy at 92.9%.
+
 ---
 
 ## 4. Experimental Results & Discussion

@@ -10,6 +10,7 @@ Autonomous ship detection from satellite imagery plays a pivotal role in maritim
 - **Domain Feature Engineering:** 531-dimensional combined feature space comprising **Hu Invariant Moments** (shape), **HSV 3D Color Histograms** (spectral), and **Haralick Textures via GLCM** (high-frequency spatial details).
 - **Neural Network Models:** Custom Convolutional Neural Network (`SIM-CNN`), Transfer Learning (`TL-CNN`), and Deep Multi-Layer Perceptron (`Deep MLP`).
 - **CPU-Friendly Proposed Method:** Hybrid Feature-Fusion Ship Detector (`HFSD`) using compact HOG, spatial HSV statistics, Hu moments, HSV histograms, and Haralick texture features with a calibrated classifier ensemble.
+- **Tuned CPU Variant:** `HFSD-Pro` adds multi-scale HOG, local LBP/contrast statistics, HSV quantiles, and validation-only ensemble tuning.
 - **Interactive Live Demonstration App:** A glassmorphic web dashboard for real-time aerial patch classification, multi-model consensus, and instant feature extraction visualization.
 
 ---
@@ -85,6 +86,14 @@ python scripts/run_hfsd_experiment.py --data-dir data/subset_6000
 This saves `models/hfsd_results.json`, `models/hfsd_pipeline.joblib`, and
 `models/hfsd_threshold_scan.png`.
 
+For the stronger tuned CPU variant:
+```bash
+python scripts/run_hfsd_pro_experiment.py --data-dir data/subset_6000
+```
+This saves `models/hfsd_pro_results.json` and
+`models/hfsd_pro_pipeline.joblib`. The first run extracts and caches 1,259
+features per image; later runs reuse the cache.
+
 For the original ZIP download, use the ZIP-aware version so the full archive is not extracted:
 ```bash
 python scripts/prepare_subset_from_zip.py --zip C:\path\to\airbus-ship-detection.zip --output data\subset_6000
@@ -151,6 +160,19 @@ At the default threshold of 0.50, HFSD reaches 91.8% accuracy, 65.6% recall,
 and 71.9% F1. The lower validation-selected threshold intentionally favors
 ship recall, which is more informative than raw accuracy for this imbalanced
 dataset.
+
+### HFSD-Pro CPU Benchmark
+
+HFSD-Pro was tuned only on the validation split and evaluated once on the
+held-out test split:
+
+| Method | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|:---|---:|---:|---:|---:|---:|
+| **HFSD-Pro (threshold 0.40)** | **92.0%** | 73.8% | **77.5%** | **75.6%** | 93.9% |
+
+HFSD-Pro has the best measured F1-score among the current models while using
+CPU-only feature extraction and inference. DenseNet-169 remains slightly
+better on raw accuracy at 92.9%, but its recall is lower at 65.6%.
 
 ---
 

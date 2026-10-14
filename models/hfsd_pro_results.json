@@ -1,0 +1,76 @@
+{
+  "method": "HFSD-Pro - Tuned Hybrid Feature-Fusion Ship Detector",
+  "description": "Existing 531 features + compact fine HOG + local texture/LBP statistics + HSV quantiles; validation-tuned HGB/RF/logistic ensemble.",
+  "dataset": {
+    "train": 4000,
+    "validation": 1000,
+    "test": 1000,
+    "train_ships": 640,
+    "val_ships": 160,
+    "test_ships": 160
+  },
+  "feature_dimension": 1259,
+  "selected_blend_weights": {
+    "hgb": 0.6,
+    "rf": 0.4,
+    "logistic": -0.0
+  },
+  "validation_threshold": 0.3999999999999998,
+  "validation_metrics": {
+    "threshold": 0.3999999999999998,
+    "accuracy": 0.94,
+    "precision": 0.7976190476190477,
+    "recall": 0.8375,
+    "specificity": 0.9595238095238096,
+    "f1": 0.8170731707317073,
+    "auc": 0.9617857142857142,
+    "confusion_matrix": [
+      [
+        806,
+        34
+      ],
+      [
+        26,
+        134
+      ]
+    ]
+  },
+  "test_metrics": {
+    "threshold": 0.3999999999999998,
+    "accuracy": 0.92,
+    "precision": 0.7380952380952381,
+    "recall": 0.775,
+    "specificity": 0.9476190476190476,
+    "f1": 0.7560975609756098,
+    "auc": 0.9394642857142858,
+    "confusion_matrix": [
+      [
+        796,
+        44
+      ],
+      [
+        36,
+        124
+      ]
+    ]
+  },
+  "test_metrics_at_0_5": {
+    "threshold": 0.5,
+    "accuracy": 0.918,
+    "precision": 0.7746478873239436,
+    "recall": 0.6875,
+    "specificity": 0.9619047619047619,
+    "f1": 0.7284768211920529,
+    "auc": 0.9394642857142858,
+    "confusion_matrix": [
+      [
+        808,
+        32
+      ],
+      [
+        50,
+        110
+      ]
+    ]
+  }
+}
