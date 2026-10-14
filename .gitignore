@@ -6,6 +6,9 @@ venv/
 data/subset_6000/
 data/airbus_dataset/
 data/*.npz
+data/hfsd_cache/
+tmp/
+cnn results/
 models/*.pth
 models/cnn_results.json
 models/cnn_training_curves.png

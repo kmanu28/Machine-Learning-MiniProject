@@ -9,6 +9,7 @@ Autonomous ship detection from satellite imagery plays a pivotal role in maritim
 - **5 Traditional Machine Learning Classifiers:** Linear Discriminant Analysis (LDA), K-Nearest Neighbors (KNN), Gaussian Naive Bayes (GNB), Random Forest (RF), and Support Vector Machines (SVM with RBF kernel).
 - **Domain Feature Engineering:** 531-dimensional combined feature space comprising **Hu Invariant Moments** (shape), **HSV 3D Color Histograms** (spectral), and **Haralick Textures via GLCM** (high-frequency spatial details).
 - **Neural Network Models:** Custom Convolutional Neural Network (`SIM-CNN`), Transfer Learning (`TL-CNN`), and Deep Multi-Layer Perceptron (`Deep MLP`).
+- **CPU-Friendly Proposed Method:** Hybrid Feature-Fusion Ship Detector (`HFSD`) using compact HOG, spatial HSV statistics, Hu moments, HSV histograms, and Haralick texture features with a calibrated classifier ensemble.
 - **Interactive Live Demonstration App:** A glassmorphic web dashboard for real-time aerial patch classification, multi-model consensus, and instant feature extraction visualization.
 
 ---
@@ -76,6 +77,14 @@ Run the fixed-split traditional-ML experiment:
 python scripts/run_subset_experiment.py --data-dir data/subset_6000
 ```
 
+Run the proposed CPU-only HFSD method. It does not require PyTorch, CUDA, or
+a GPU:
+```bash
+python scripts/run_hfsd_experiment.py --data-dir data/subset_6000
+```
+This saves `models/hfsd_results.json`, `models/hfsd_pipeline.joblib`, and
+`models/hfsd_threshold_scan.png`.
+
 For the original ZIP download, use the ZIP-aware version so the full archive is not extracted:
 ```bash
 python scripts/prepare_subset_from_zip.py --zip C:\path\to\airbus-ship-detection.zip --output data\subset_6000
@@ -127,6 +136,21 @@ Open your browser at **`http://127.0.0.1:5000`**. You can:
 - **Naive Bayes:** 36.95% ± 1.58% accuracy; precision 19.17%, recall 91.41%, F1 31.68%
 
 Random Forest with His+Ha features produced the best held-out accuracy. The validation threshold scan selected 0.35 and achieved F1 = 0.7898.
+
+### Proposed HFSD CPU Benchmark
+
+The CPU-only HFSD run on the same fixed split produced the following held-out
+test metrics. The threshold was selected on validation data, not on the test
+set:
+
+| Method | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|:---|---:|---:|---:|---:|---:|
+| **HFSD (threshold 0.28)** | 90.4% | 66.8% | **79.4%** | **72.6%** | 92.9% |
+
+At the default threshold of 0.50, HFSD reaches 91.8% accuracy, 65.6% recall,
+and 71.9% F1. The lower validation-selected threshold intentionally favors
+ship recall, which is more informative than raw accuracy for this imbalanced
+dataset.
 
 ---
 

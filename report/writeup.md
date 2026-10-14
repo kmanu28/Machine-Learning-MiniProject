@@ -46,6 +46,23 @@ We implemented five baseline algorithms:
 - **Simple CNN ($\text{SIM-CNN}$):** Custom 4-stage convolutional neural network trained from scratch with Batch Normalization, Max Pooling ($2\times 2$), Dropout ($p=0.5$), and Dense classification head (32,768 $\rightarrow$ 128 $\rightarrow$ 1).
 - **Transfer Learning CNN ($\text{TL-CNN}$):** Pretrained ImageNet backbone ($\text{MobileNetV2}$ / $\text{DenseNet169}$) with frozen feature extractor layers and trainable multi-layer classification head.
 
+### 3.4 Proposed CPU-Friendly Method
+We also implement a proposed **Hybrid Feature-Fusion Ship Detector (HFSD)** for
+environments without CUDA. HFSD combines the existing 531-dimensional HSV,
+Haralick, and Hu feature vector with a compact HOG descriptor and 4-by-4
+spatial HSV mean/standard-deviation statistics. A weighted probability blend of
+HistGradientBoosting, balanced Random Forest, and class-balanced logistic
+regression produces the final score. The operating threshold is selected on
+the validation split for F1-score and is then fixed for test evaluation. This
+keeps the method CPU-friendly while combining spectral, texture, shape, edge,
+and spatial information.
+
+On the fixed 6,000-image experiment, HFSD achieved 90.4% test accuracy,
+66.8% precision, 79.4% recall, 72.6% F1, and 92.9% ROC-AUC at its validation-
+selected threshold of 0.28. At the default 0.50 threshold it achieved 91.8%
+accuracy and 71.9% F1. The selected lower threshold favors detection recall,
+which is appropriate because ship images are the minority class.
+
 ---
 
 ## 4. Experimental Results & Discussion

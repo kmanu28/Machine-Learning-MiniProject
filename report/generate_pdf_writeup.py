@@ -125,7 +125,8 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
           "1. <b>Hu Moments (Hu - 7 dims):</b> 2D invariant central moments on grayscale contours, invariant to rotation, translation, and scale.<br/>"
           "2. <b>Color Histograms (His - 512 dims):</b> 3D HSV histogram (8 bins/channel) capturing spectral differences between vessel hulls, wakes, and water.<br/>"
           "3. <b>Haralick Textures (Ha - 12 dims):</b> Gray-Level Co-occurrence Matrix (GLCM) metrics (Contrast, Dissimilarity, Homogeneity, Energy, Correlation, ASM) capturing high-frequency ship edges.<br/>"
-          "<b>Deep Learning:</b> <i>SIM-CNN</i> (4 Conv+BN+ReLU+MaxPool layers trained from scratch) and <i>TL-CNN</i> (ImageNet pretrained backbone with custom classification head).")
+          "<b>Deep Learning:</b> <i>SIM-CNN</i> (4 Conv+BN+ReLU+MaxPool layers trained from scratch) and <i>TL-CNN</i> (ImageNet pretrained DenseNet-169 backbone with custom classification head).<br/>"
+          "<b>Proposed CPU Method:</b> <i>HFSD</i> fuses the global descriptors with compact HOG and 4x4 spatial HSV statistics, then blends HistGradientBoosting, balanced Random Forest, and class-balanced logistic regression.")
     elements.append(Paragraph(p3, body_style))
     elements.append(Spacer(1, 6))
 
@@ -145,11 +146,11 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
             Paragraph("<b>w/ All</b>", table_header_style),
             Paragraph("<b>w/o (Raw)</b>", table_header_style)
         ],
-        [Paragraph("<b>Random Forest (RF)</b>", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("80.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("96.0%", table_cell_style), Paragraph("<b>100.0%</b>", table_cell_style), Paragraph("72.0%", table_cell_style)],
-        [Paragraph("<b>SVM (RBF)</b>", table_cell_style), Paragraph("64.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("80.0%", table_cell_style), Paragraph("88.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("76.0%", table_cell_style), Paragraph("<b>88.0%</b>", table_cell_style), Paragraph("68.0%", table_cell_style)],
-        [Paragraph("<b>KNN (k=5)</b>", table_cell_style), Paragraph("64.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("80.0%", table_cell_style), Paragraph("92.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("84.0%", table_cell_style), Paragraph("<b>92.0%</b>", table_cell_style), Paragraph("72.0%", table_cell_style)],
-        [Paragraph("<b>LDA</b>", table_cell_style), Paragraph("68.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("76.0%", table_cell_style), Paragraph("80.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("56.0%", table_cell_style), Paragraph("<b>88.0%</b>", table_cell_style), Paragraph("56.0%", table_cell_style)],
-        [Paragraph("<b>Naive Bayes</b>", table_cell_style), Paragraph("84.0%", table_cell_style), Paragraph("100.0%", table_cell_style), Paragraph("56.0%", table_cell_style), Paragraph("84.0%", table_cell_style), Paragraph("96.0%", table_cell_style), Paragraph("84.0%", table_cell_style), Paragraph("<b>84.0%</b>", table_cell_style), Paragraph("32.0%", table_cell_style)]
+        [Paragraph("<b>Random Forest (RF)</b>", table_cell_style), Paragraph("91.4%", table_cell_style), Paragraph("87.4%", table_cell_style), Paragraph("83.9%", table_cell_style), Paragraph("<b>91.6%</b>", table_cell_style), Paragraph("88.0%", table_cell_style), Paragraph("91.2%", table_cell_style), Paragraph("91.3%", table_cell_style), Paragraph("84.7%", table_cell_style)],
+        [Paragraph("<b>SVM (RBF)</b>", table_cell_style), Paragraph("85.1%", table_cell_style), Paragraph("86.5%", table_cell_style), Paragraph("84.0%", table_cell_style), Paragraph("85.4%", table_cell_style), Paragraph("86.1%", table_cell_style), Paragraph("85.2%", table_cell_style), Paragraph("85.5%", table_cell_style), Paragraph("83.9%", table_cell_style)],
+        [Paragraph("<b>KNN (k=5)</b>", table_cell_style), Paragraph("85.1%", table_cell_style), Paragraph("87.1%", table_cell_style), Paragraph("81.0%", table_cell_style), Paragraph("86.9%", table_cell_style), Paragraph("85.3%", table_cell_style), Paragraph("83.7%", table_cell_style), Paragraph("86.5%", table_cell_style), Paragraph("82.8%", table_cell_style)],
+        [Paragraph("<b>LDA</b>", table_cell_style), Paragraph("84.4%", table_cell_style), Paragraph("84.3%", table_cell_style), Paragraph("84.0%", table_cell_style), Paragraph("86.0%", table_cell_style), Paragraph("84.5%", table_cell_style), Paragraph("84.0%", table_cell_style), Paragraph("85.5%", table_cell_style), Paragraph("66.5%", table_cell_style)],
+        [Paragraph("<b>Naive Bayes</b>", table_cell_style), Paragraph("33.7%", table_cell_style), Paragraph("70.6%", table_cell_style), Paragraph("16.3%", table_cell_style), Paragraph("33.8%", table_cell_style), Paragraph("19.7%", table_cell_style), Paragraph("33.9%", table_cell_style), Paragraph("33.9%", table_cell_style), Paragraph("46.5%", table_cell_style)]
     ]
 
     t = Table(table_data, colWidths=[80, 48, 48, 48, 54, 54, 54, 56, 56])
@@ -171,11 +172,11 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
     # --- Page 2 ---
     elements.append(Paragraph("4.2 10-Fold Stratified Cross-Validation & Stability", h1_style))
     p4 = ("10-Fold Cross-Validation confirmed the robustness of the feature-engineered classifiers across independent folds:<br/>"
-          "• <b>Random Forest:</b> <b>99.23% ± 2.31%</b> test accuracy (Precision: 100%, Recall: 98.0%, F1: 0.99)<br/>"
-          "• <b>Support Vector Machine (RBF):</b> <b>97.56% ± 3.72%</b> test accuracy (Precision: 100%, Recall: 94.0%)<br/>"
-          "• <b>K-Nearest Neighbors (k=5):</b> <b>95.96% ± 5.50%</b> test accuracy (Precision: 98.0%, Recall: 92.0%)<br/>"
-          "• <b>Linear Discriminant Analysis:</b> <b>72.05% ± 12.01%</b> test accuracy<br/>"
-          "• <b>Gaussian Naive Bayes:</b> <b>74.17% ± 9.29%</b> test accuracy")
+          "• <b>Random Forest:</b> <b>91.97% ± 1.08%</b> accuracy (Precision: 88.13%, Recall: 57.81%, F1: 69.67%)<br/>"
+          "• <b>K-Nearest Neighbors:</b> <b>85.72% ± 1.43%</b> accuracy (Precision: 59.24%, Recall: 34.53%, F1: 43.27%)<br/>"
+          "• <b>Support Vector Machine:</b> <b>84.85% ± 0.49%</b> accuracy (Precision: 80.54%, Recall: 7.97%, F1: 14.28%)<br/>"
+          "• <b>Linear Discriminant Analysis:</b> <b>84.10% ± 0.91%</b> accuracy (F1: 41.24%)<br/>"
+          "• <b>Gaussian Naive Bayes:</b> <b>36.95% ± 1.58%</b> accuracy (Recall: 91.41%, F1: 31.68%)")
     elements.append(Paragraph(p4, body_style))
     elements.append(Spacer(1, 6))
 
@@ -202,15 +203,16 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
     # --- Section 5: Decision Threshold Scanning ---
     elements.append(Paragraph("4.3 Decision Threshold Optimization for Imbalanced Data", h1_style))
     p5 = ("Due to maritime class imbalance, shifting the decision threshold from the default 0.5 down to 0.3-0.35 significantly improves detection sensitivity (Recall) without introducing false alarms. "
-          "Random Forest reached optimal F1-score of 1.00 at threshold 0.30.")
+          "Random Forest reached validation F1 = 0.7898 at threshold 0.35. The proposed HFSD selected threshold 0.28 and achieved test accuracy 90.4%, recall 79.4%, F1 72.6%, and ROC-AUC 92.9%.")
     elements.append(Paragraph(p5, body_style))
     elements.append(Spacer(1, 6))
 
     # --- Section 6: Conclusions & Deliverables ---
     elements.append(Paragraph("5. Conclusions & Project Deliverables", h1_style))
     p6 = ("1. <b>Feature Engineering Impact:</b> Hand-crafted GLCM texture and HSV color features drastically improve non-neural ML performance, outperforming raw pixel classifiers by over 28%.<br/>"
-          "2. <b>Classifier Comparison:</b> Random Forest proved the most stable and accurate traditional model, matching the discrimination capacity of deep CNN architectures while executing in <5ms.<br/>"
-          "3. <b>Interactive Web Dashboard:</b> A live demonstration dashboard was developed allowing real-time tile upload, instant feature extraction visualization, and multi-model consensus prediction.")
+          "2. <b>Classifier Comparison:</b> Random Forest reached 91.6% held-out accuracy, while DenseNet-169 reached 92.9% accuracy and F1 74.7%.<br/>"
+          "3. <b>CPU Contribution:</b> HFSD combines multiple complementary descriptors and improves ship recall to 79.4% without CUDA; its extracted features are cached for fast repeated runs.<br/>"
+          "4. <b>Interactive Web Dashboard:</b> A live demonstration dashboard was developed allowing real-time tile upload, instant feature extraction visualization, and multi-model consensus prediction.")
     elements.append(Paragraph(p6, body_style))
 
     doc.build(elements)
