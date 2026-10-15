@@ -126,7 +126,7 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
           "2. <b>Color Histograms (His - 512 dims):</b> 3D HSV histogram (8 bins/channel) capturing spectral differences between vessel hulls, wakes, and water.<br/>"
           "3. <b>Haralick Textures (Ha - 12 dims):</b> Gray-Level Co-occurrence Matrix (GLCM) metrics (Contrast, Dissimilarity, Homogeneity, Energy, Correlation, ASM) capturing high-frequency ship edges.<br/>"
           "<b>Deep Learning:</b> <i>SIM-CNN</i> (4 Conv+BN+ReLU+MaxPool layers trained from scratch) and <i>TL-CNN</i> (ImageNet pretrained DenseNet-169 backbone with custom classification head).<br/>"
-          "<b>Proposed CPU Method:</b> <i>HFSD-Pro</i> adds multi-scale HOG, local LBP/contrast statistics, HSV quantiles, and validation-tuned blending to the global descriptors, then uses HistGradientBoosting and balanced Random Forest models.")
+          "<b>Proposed CPU Method - HFSD-Pro:</b> Our original CPU-only method extends the 531 global descriptors with compact fine-scale HOG edges, 4x4 local intensity/contrast and LBP texture statistics, and HSV quantiles. It trains HistGradientBoosting and balanced Random Forest candidates, selects the best configurations and blend weights using validation data only, then tunes one operating threshold for F1-score. No CUDA, PyTorch, or pretrained weights are required.")
     elements.append(Paragraph(p3, body_style))
     elements.append(Spacer(1, 6))
 
@@ -206,6 +206,25 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
           "Random Forest reached validation F1 = 0.7898 at threshold 0.35. HFSD-Pro selected threshold 0.40 and achieved test accuracy 92.0%, recall 77.5%, F1 75.6%, and ROC-AUC 93.9% using CPU-only features and inference.")
     elements.append(Paragraph(p5, body_style))
     elements.append(Spacer(1, 6))
+
+    hfsd_table = Table([
+        [Paragraph("<b>HFSD-Pro component</b>", table_header_style), Paragraph("<b>Implementation</b>", table_header_style)],
+        [Paragraph("Input representation", table_cell_style), Paragraph("1,259 fused features per 256x256 image", table_cell_style)],
+        [Paragraph("Feature groups", table_cell_style), Paragraph("HSV histogram, Haralick GLCM, Hu moments, fine HOG, local LBP/contrast, HSV quantiles", table_cell_style)],
+        [Paragraph("Models", table_cell_style), Paragraph("Validation-tuned HistGradientBoosting + balanced Random Forest blend", table_cell_style)],
+        [Paragraph("Final test result", table_cell_style), Paragraph("92.0% accuracy | 73.8% precision | 77.5% recall | 75.6% F1 | 93.9% ROC-AUC", table_cell_style)],
+    ], colWidths=[130, 410])
+    hfsd_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0077b6')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e1')),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#f8fafc'), colors.white]),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+    ]))
+    elements.append(hfsd_table)
+    elements.append(Spacer(1, 5))
 
     # --- Section 6: Conclusions & Deliverables ---
     elements.append(Paragraph("5. Conclusions & Project Deliverables", h1_style))
