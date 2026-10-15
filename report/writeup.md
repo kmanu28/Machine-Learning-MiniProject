@@ -16,7 +16,7 @@ The objective of this project is to develop and evaluate high-performance classi
 ## 2. Dataset Description & Preprocessing
 - **Source:** Kaggle Airbus Ship Detection Challenge / Satellite Aerial Imagery.
 - **Experimental subset:** The reproducible target subset is 6,000 images split into 4,000 training, 1,000 validation, and 1,000 test images. The `scripts/prepare_subset.py` utility preserves approximately 16% ship prevalence and removes exact duplicates.
-- **Important status note:** The committed benchmark numbers were generated earlier on a 125-image demonstration set and must be replaced by the 6,000-image run before submission. They are not presented as Airbus-scale final results.
+- **Experiment status:** All reported benchmark numbers below come from the reproducible 6,000-image Airbus subset. The original 125-image data was only a local smoke-test dataset and is not used for the final results.
 - **Image Resolution:** 256 × 256 pixels, 3-channel RGB.
 - **Class Balance:** Approximately 16% ship images and 84% background (open ocean, clouds, coastline, wharf infrastructure), representing a severe real-world class imbalance.
 - **Preprocessing Pipeline:**
@@ -44,7 +44,7 @@ We implemented five baseline algorithms:
 
 ### 3.3 Deep Learning Architectures
 - **Simple CNN ($\text{SIM-CNN}$):** Custom 4-stage convolutional neural network trained from scratch with Batch Normalization, Max Pooling ($2\times 2$), Dropout ($p=0.5$), and Dense classification head (32,768 $\rightarrow$ 128 $\rightarrow$ 1).
-- **Transfer Learning CNN ($\text{TL-CNN}$):** Pretrained ImageNet backbone ($\text{MobileNetV2}$ / $\text{DenseNet169}$) with frozen feature extractor layers and trainable multi-layer classification head.
+- **Transfer Learning CNN ($\text{TL-CNN}$):** Pretrained ImageNet DenseNet-169 backbone with frozen feature extractor layers and a trainable multi-layer classification head.
 
 ### 3.4 Proposed CPU-Friendly Method
 We also implement a proposed **Hybrid Feature-Fusion Ship Detector (HFSD)** for

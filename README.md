@@ -8,7 +8,7 @@
 Autonomous ship detection from satellite imagery plays a pivotal role in maritime surveillance, port traffic management, disaster response, and prevention of illegal maritime activities. This repository implements and evaluates an end-to-end maritime vision pipeline that benchmarks:
 - **5 Traditional Machine Learning Classifiers:** Linear Discriminant Analysis (LDA), K-Nearest Neighbors (KNN), Gaussian Naive Bayes (GNB), Random Forest (RF), and Support Vector Machines (SVM with RBF kernel).
 - **Domain Feature Engineering:** 531-dimensional combined feature space comprising **Hu Invariant Moments** (shape), **HSV 3D Color Histograms** (spectral), and **Haralick Textures via GLCM** (high-frequency spatial details).
-- **Neural Network Models:** Custom Convolutional Neural Network (`SIM-CNN`), Transfer Learning (`TL-CNN`), and Deep Multi-Layer Perceptron (`Deep MLP`).
+- **Neural Network Models:** Custom CNN (`SIM-CNN`) trained from scratch and DenseNet-169 transfer CNN (`TL-CNN`). The legacy Deep MLP remains available as an optional baseline but is not part of the final headline comparison.
 - **CPU-Friendly Proposed Method:** Hybrid Feature-Fusion Ship Detector (`HFSD`) using compact HOG, spatial HSV statistics, Hu moments, HSV histograms, and Haralick texture features with a calibrated classifier ensemble.
 - **Tuned CPU Variant:** `HFSD-Pro` adds multi-scale HOG, local LBP/contrast statistics, HSV quantiles, and validation-only ensemble tuning.
 - **Interactive Live Demonstration App:** A glassmorphic web dashboard for real-time aerial patch classification, multi-model consensus, and instant feature extraction visualization.
@@ -34,6 +34,12 @@ mini project/
 │   ├── train_traditional.py       # Full benchmark runner reproducing Table 1 & CV
 │   ├── train_cnn.py               # CNN training loop and loss curve logger
 │   └── visualize.py               # Diagnostic plotting (Box plots, ROC/Threshold curves)
+├── scripts/
+│   ├── prepare_subset.py          # Build the reproducible 6,000-image subset
+│   ├── prepare_subset_from_zip.py # Extract only the needed images from the ZIP
+│   ├── run_subset_experiment.py   # Traditional ML benchmark
+│   ├── run_hfsd_experiment.py     # First CPU-only HFSD method
+│   └── run_hfsd_pro_experiment.py # Final tuned CPU-only HFSD-Pro method
 ├── models/
 │   ├── RandomForestClassifier_all.joblib   # Serialized trained models
 │   ├── SVC_all.joblib
@@ -43,7 +49,9 @@ mini project/
 │   ├── MLPClassifier_all.joblib
 │   ├── cv_boxplot.png             # 10-Fold CV accuracy box plot
 │   ├── threshold_scanning.png     # Decision threshold optimization curve
-│   └── experiment_results.json    # Complete benchmark metrics
+│   ├── experiment_results.json    # Traditional ML benchmark metrics
+│   ├── hfsd_results.json          # HFSD metrics
+│   └── hfsd_pro_results.json      # HFSD-Pro metrics
 ├── templates/
 │   └── index.html                 # Modern glassmorphic Web Demo Dashboard
 ├── notebooks/
@@ -146,6 +154,17 @@ Open your browser at **`http://127.0.0.1:5000`**. You can:
 
 Random Forest with His+Ha features produced the best held-out accuracy. The validation threshold scan selected 0.35 and achieved F1 = 0.7898.
 
+### CNN and Proposed-Method Comparison
+
+| Model | Accuracy | Precision | Recall | F1 | Compute |
+|:---|---:|---:|---:|---:|:---|
+| SIM-CNN | 85.6% | 86.4% | 11.9% | 20.9% | GPU recommended |
+| DenseNet-169 / TL-CNN | **92.9%** | 86.8% | 65.6% | 74.7% | Colab GPU; pretrained |
+| HFSD-Pro | 92.0% | 73.8% | **77.5%** | **75.6%** | CPU-only; no pretrained weights |
+
+DenseNet-169 has the highest raw accuracy. HFSD-Pro has the best measured F1
+and recall balance while running entirely on CPU.
+
 ### Proposed HFSD CPU Benchmark
 
 The CPU-only HFSD run on the same fixed split produced the following held-out
@@ -180,5 +199,5 @@ better on raw accuracy at 92.9%, but its recall is lower at 65.6%.
 1. **Source Code:** Complete modular Python codebase in `src/`, `models/`, and `app.py`.
 2. **Colab Notebook:** Run [Airbus_Ship_Detection_Colab_Complete.ipynb](notebooks/Airbus_Ship_Detection_Colab_Complete.ipynb) to train and evaluate both CNNs using the Drive subset.
 3. **Two-Page Write-up:** Available in [`report/writeup.pdf`](report/writeup.pdf) and [`report/writeup.md`](report/writeup.md).
-4. **Presentation Deck:** Available in [`report/presentation_slides.md`](report/presentation_slides.md).
+4. **Presentation Deck:** Available in [`report/presentation_slides.md`](report/presentation_slides.md). It covers the reference paper, our reproduction, HFSD-Pro, and the side-by-side results.
 5. **Live Demonstration:** Interactive Web Dashboard running via `python app.py`.

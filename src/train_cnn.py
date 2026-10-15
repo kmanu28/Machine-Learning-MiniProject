@@ -255,7 +255,7 @@ def run_cnn_training_pipeline(data_dir: str = "data/sample_dataset", epochs: int
     sim_model = SimpleCNN()
     sim_history = train_single_model("SIM-CNN", sim_model, train_loader, val_loader, epochs=epochs, lr=0.0005, device=device)
 
-    # 2. Train TL-CNN (MobileNetV2 / DenseNet backbone)
+    # 2. Train TL-CNN (DenseNet-169 transfer-learning backbone)
     tl_model = TransferLearningCNN(backbone="densenet169", pretrained=True)
     tl_history = train_single_model("TL-CNN", tl_model, train_loader, val_loader, epochs=epochs, lr=0.001, device=device)
 

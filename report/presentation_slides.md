@@ -1,111 +1,171 @@
-# Airbus Ship Detection: Traditional ML vs. Convolutional Neural Networks
-## Final Review & Demonstration Presentation Deck
+# Airbus Ship Detection
+## Reference reproduction, independent benchmark, and HFSD-Pro CPU method
+
+### Slide 1: Project Overview
+
+- **Problem:** classify 256 × 256 Airbus satellite tiles as Ship or No Ship.
+- **Reference:** Stanford CS229 Airbus ship-detection project.
+- **Our experiment:** reproduce the paper's traditional ML and CNN comparison on a reproducible 6,000-image subset.
+- **Our contribution:** HFSD-Pro, a CPU-only feature-fusion detector designed for the same task.
+
+**Central question:** what do we gain from engineered features, CNNs, and our CPU method under the same held-out evaluation?
 
 ---
 
-### Slide 1: Title & Overview
-- **Project Title:** Airbus Ship Detection from Satellite & Aerial Imagery
-- **Course:** UE24CS352A - Machine Learning Mini-Project
-- **Problem Statement:** Serial No. 35 (Stanford CS229 Project Benchmark)
-- **Team Members:** [Student Names & SRNs]
-- **Key Highlight:** Comprehensive evaluation of 5 Traditional ML algorithms + Deep Learning architectures with hand-engineered feature representations (Hu Moments, Haralick Textures, HSV Histograms).
+### Slide 2: Why Ship Detection Is Difficult
+
+- Ships occupy a small part of many tiles.
+- Ocean, wakes, clouds, coastlines, and glare create similar visual patterns.
+- The subset contains approximately 16% ship images and 84% no-ship images.
+- Accuracy alone can hide missed ships, so we report precision, recall, F1, specificity, and ROC-AUC.
+
+**Task:** maximize useful ship detection while keeping false alarms manageable.
 
 ---
 
-### Slide 2: Problem Definition & Motivation
-- **Context:** Fast-growing maritime traffic demands autonomous surveillance for port operations, illegal fishing prevention, and maritime safety.
-- **Challenge:** Satellite imagery suffers from:
-  - Strong sea state variability (waves, sun glitter, dark open water).
-  - Heavy class imbalance (~84% background sea/clouds vs ~16% vessels).
-  - High false alarm rates caused by cloud edges and coastal structures.
-- **Goal:** Build an accurate binary classifier (Ship vs. No-Ship) capable of real-time execution.
+### Slide 3: Dataset and Experimental Protocol
+
+| Reference paper | Our project |
+|:---|:---|
+| 15,000 images: 7,000 train, 3,000 development, 5,000 test | 6,000 images: 4,000 train, 1,000 validation, 1,000 test |
+| Paper-scale experiment | CPU/GPU-friendly reproducible subset |
+| Reference benchmark | Independent held-out measurements |
+
+- Images are resized to 256 × 256 × 3.
+- The train/validation/test split is fixed with ship prevalence preserved.
+- The test set remains untouched during feature/model/threshold selection.
 
 ---
 
-### Slide 3: Dataset & Preprocessing
-- **Source:** Kaggle Airbus Ship Detection Dataset (Satellite tiles 256×256×3).
-- **Preprocessing Pipeline:**
-  - Standard RGB color normalization ($[0, 1]$).
-  - Grayscale conversion for shape and texture analysis.
-  - HSV color space transformation for water vs. vessel chromatic separation.
-- **Data Augmentation:**
-  - Random orthogonal rotations ($90^\circ, 180^\circ, 270^\circ$).
-  - Horizontal & Vertical mirroring.
-  - Brightness/contrast jittering ($\pm 15\%$).
+### Slide 4: Reference Feature Engineering
+
+The reference traditional pipeline uses 531 global features:
+
+1. **HSV histogram, 512 dimensions** — global color distribution of water, hulls, wakes, and clouds.
+2. **Haralick GLCM texture, 12 dimensions** — contrast, homogeneity, energy, correlation, and related texture statistics.
+3. **Hu moments, 7 dimensions** — global shape and intensity geometry.
+
+The paper compares color, texture, shape, pairwise combinations, all features, and raw pixels.
 
 ---
 
-### Slide 4: Feature Engineering Strategy
-We engineered 3 complementary global feature families totaling 531 dimensions:
-1. **Hu Invariant Moments (7 dimensions):**
-   - Translation, rotation, and scale-invariant shape moments on grayscale contours.
-   - Captures vessel geometry and elongation.
-2. **HSV 3D Color Histograms (512 dimensions):**
-   - $8 \times 8 \times 8$ bin quantization in HSV color space.
-   - Differentiates ocean hue gradients from metallic vessel hulls and foamy wakes.
-3. **Haralick Texture Features (12 dimensions):**
-   - Gray-Level Co-occurrence Matrix (GLCM) statistics.
-   - Computes Contrast, Dissimilarity, Homogeneity, Energy, Correlation, and ASM.
+### Slide 5: Models Recreated from the Paper
+
+- **LDA** — linear class separation.
+- **KNN** — distance-weighted nearest-neighbor voting.
+- **Gaussian Naive Bayes** — probabilistic baseline.
+- **Random Forest** — nonlinear tree ensemble.
+- **SVM** — RBF-kernel classifier.
+- **SIM-CNN** — four convolution/pooling stages trained from scratch.
+- **TL-CNN / DenseNet-169** — transfer-learning CNN with a classification head.
+
+The CNN names are project labels: TL-CNN refers to the DenseNet-169 transfer model, while SIM-CNN refers to the paper-style simple CNN.
 
 ---
 
-### Slide 5: Model Architectures & Methodology
-- **Traditional ML Suite:**
-  - **Random Forest (RF):** 70 estimators with sub-tree bagging.
-  - **Support Vector Machine (SVM):** Non-linear RBF kernel with soft-margin tuning.
-  - **K-Nearest Neighbors (KNN):** Distance-weighted voting ($k=5$).
-  - **Linear Discriminant Analysis (LDA):** Maximum between-class separation.
-  - **Gaussian Naive Bayes (GNB):** Probabilistic independence baseline.
-- **Deep Learning Suite:**
-  - **SIM-CNN:** 4-layer Convolutional Neural Network trained from scratch.
-  - **TL-CNN:** Transfer learning backbone with custom classification head.
-  - **Deep MLP:** Multi-layer feedforward neural network on extracted feature space.
+### Slide 6: Our HFSD-Pro Method
+
+HFSD-Pro extends the reference feature representation without using CUDA or pretrained weights.
+
+**Feature pipeline**
+
+`HSV + Haralick + Hu` → `fine HOG edges` → `local LBP/contrast statistics` → `HSV quantiles` → **1,259 fused features**
+
+**Classifier pipeline**
+
+1. Train HistGradientBoosting and balanced Random Forest candidates.
+2. Select configurations and blend weights using validation data only.
+3. Tune one decision threshold for F1-score on validation data.
+4. Evaluate once on the held-out test set.
+
+This is our original contribution: a CPU-friendly detector that combines global appearance with local edge and texture evidence.
 
 ---
 
-### Slide 6: Results - Feature Engineering Ablation (Table 1)
+### Slide 7: Traditional ML Results on Our 6,000-Image Subset
 
-| Algorithm | Color Hist (His) | Haralick (Ha) | Hu Moments (Hu) | His + Ha | Ha + Hu | w/ All Features | Raw Pixels (w/o) |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Random Forest** | 100.0% | 100.0% | 80.0% | 100.0% | 100.0% | **100.0%** | **72.0%** |
-| **SVM (RBF)** | 64.0% | 100.0% | 80.0% | 88.0% | 100.0% | **88.0%** | **68.0%** |
-| **KNN (k=5)** | 64.0% | 100.0% | 80.0% | 92.0% | 100.0% | **92.0%** | **72.0%** |
-| **LDA** | 68.0% | 100.0% | 76.0% | 80.0% | 100.0% | **88.0%** | **56.0%** |
-| **Naive Bayes** | 84.0% | 100.0% | 56.0% | 84.0% | 96.0% | **84.0%** | **32.0%** |
+| Feature set | LDA | KNN | NB | RF | SVM |
+|:---|---:|---:|---:|---:|---:|
+| His | 84.4% | 85.1% | 33.7% | 91.4% | 85.1% |
+| Ha | 84.3% | 87.1% | 70.6% | 87.4% | 86.5% |
+| Hu | 84.0% | 81.0% | 16.3% | 83.9% | 84.0% |
+| His + Ha | 86.0% | 86.9% | 33.8% | **91.6%** | 85.4% |
+| All | 85.5% | 86.5% | 33.9% | 91.3% | 85.5% |
+| Raw pixels | 66.5% | 82.8% | 46.5% | 84.7% | 83.9% |
 
-**Takeaway:** Feature engineering boosts accuracy by up to **+52%** over raw pixel baselines.
-
----
-
-### Slide 7: 10-Fold Cross-Validation & Stability
-- **Random Forest:** $99.23\% \pm 2.31\%$ test accuracy (Precision: $100\%$, Recall: $98\%$)
-- **SVM (RBF):** $97.56\% \pm 3.72\%$ test accuracy (Precision: $100\%$, Recall: $94\%$)
-- **KNN ($k=5$):** $95.96\% \pm 5.50\%$ test accuracy
-- **Deep MLP:** $96.00\%$ validation accuracy
-- **Decision Threshold Optimization:** Lowering classification threshold to $0.30$ maximizes F1-score on imbalanced maritime imagery.
+**Finding:** color plus texture is the strongest traditional RF representation in this subset.
 
 ---
 
-### Slide 8: Live Demonstration Walkthrough
-- **Web App URL:** `http://127.0.0.1:5000`
-- **Demo Capabilities:**
-  1. Instant satellite patch upload or selection from preset tile library.
-  2. Live multi-modal feature extraction display (Hu invariant bar chart, Haralick texture radar, HSV histogram distribution).
-  3. Real-time multi-model ensemble consensus and individual model probability bars.
-  4. Ultra-low latency inference ($<5\text{ ms}$).
+### Slide 8: CNN and HFSD-Pro Results
+
+| Model | Accuracy | Precision | Recall | F1 | Hardware/method |
+|:---|---:|---:|---:|---:|:---|
+| SIM-CNN | 85.6% | 86.4% | 11.9% | 20.9% | From scratch |
+| DenseNet-169 / TL-CNN | **92.9%** | 86.8% | 65.6% | 74.7% | Pretrained GPU model |
+| HFSD-Pro | 92.0% | 73.8% | **77.5%** | **75.6%** | CPU-only |
+
+**Interpretation:** DenseNet-169 has the highest raw accuracy. HFSD-Pro has the best measured F1/recall balance and does not require CUDA or pretrained weights.
 
 ---
 
-### Slide 9: Conclusions & Future Scope
-- **Conclusions:**
-  1. Hand-engineered Haralick textures and HSV histograms provide rich signals that allow lightweight traditional ML models (Random Forest) to achieve state-of-the-art accuracy.
-  2. Ensemble models deliver high robustness against coastal and cloud clutter.
-- **Future Work:**
-  - Implementing local keypoint descriptors (SIFT / Bag of Visual Words).
-  - Deploying semantic segmentation (U-Net) for bounding-box vessel localization.
+### Slide 9: Reference Benchmarks vs. Our Results
+
+| Technique | Reference paper | Our experiment | What it means |
+|:---|---:|---:|:---|
+| Random Forest | approximately 93% accuracy | 91.6% accuracy | Smaller subset gives a slightly lower benchmark |
+| Simple CNN | approximately 94% accuracy | 85.6% accuracy, 20.9% F1 | Our imbalance exposes missed ships |
+| DenseNet-169 | Transfer-learning baseline | 92.9% accuracy, 74.7% F1 | Best raw accuracy in our run |
+| HFSD-Pro | Not in reference paper | 92.0% accuracy, 75.6% F1 | New CPU-only method; best measured F1 |
+
+These numbers are not expected to match exactly because the dataset size, split, and training environment differ.
 
 ---
 
-### Slide 10: Q&A
-- Thank you for your time!
-- Questions & Discussion.
+### Slide 10: Thresholds and Error Analysis
+
+- The default 0.50 threshold prioritizes conservative positive predictions.
+- HFSD-Pro selects threshold **0.40** on validation data.
+- At that threshold, HFSD-Pro detects **124 of 160 ships** in the held-out test set.
+- It produces 44 false positives and 36 missed ships.
+- Threshold selection makes the recall/precision trade-off explicit instead of hiding it behind accuracy.
+
+---
+
+### Slide 11: Demo and Reproducibility
+
+**CPU traditional/HFSD-Pro run**
+
+```bash
+python scripts/run_hfsd_pro_experiment.py --data-dir data/subset_6000
+```
+
+**CNN run**
+
+Run `notebooks/Airbus_Ship_Detection_Colab_Complete.ipynb` on the fixed Drive subset.
+
+**Outputs**
+
+- `models/experiment_results.json`
+- `models/hfsd_pro_results.json`
+- `models/hfsd_pro_pipeline.joblib`
+- `cnn results/cnn_results.json` locally after downloading Colab artifacts
+- `report/writeup.pdf`
+
+---
+
+### Slide 12: Conclusion
+
+- The reference pipeline establishes strong baselines with engineered features and CNNs.
+- Our independent 6,000-image run confirms the same broad pattern: engineered features matter, and class imbalance changes the interpretation of accuracy.
+- DenseNet-169 gives the highest raw accuracy in our experiment.
+- **HFSD-Pro is our original CPU-only method and the strongest measured F1/recall option.**
+- The next validation step is repeating the comparison on the paper's full 15,000-image split.
+
+---
+
+### Slide 13: Questions
+
+**Airbus Ship Detection**
+
+Reference reproduction, independent benchmark, and HFSD-Pro CPU method.

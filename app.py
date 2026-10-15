@@ -13,6 +13,7 @@ import sys
 import json
 import base64
 import numpy as np
+import joblib
 from PIL import Image
 from flask import Flask, render_template, request, jsonify, send_from_directory
 
@@ -29,12 +30,23 @@ from src.features import (
     rgb_to_hsv_manual
 )
 from src.models_traditional import load_trained_pipeline, get_traditional_classifiers
+from scripts.run_hfsd_pro_experiment import fine_hog, local_texture_features, color_quantiles
 
 app = Flask(__name__, template_folder=os.path.join(BASE_DIR, "templates"), static_folder=os.path.join(BASE_DIR, "static"))
 
 # Load available pre-trained models
 MODELS = {}
 MODEL_DIR = os.path.join(BASE_DIR, "models")
+
+
+def extract_hfsd_pro_vector(image: np.ndarray) -> np.ndarray:
+    """Build the same 1,259-feature vector used by the saved HFSD-Pro model."""
+    return np.hstack((
+        extract_features(image, "all"),
+        fine_hog(image),
+        local_texture_features(image),
+        color_quantiles(image),
+    )).astype(np.float32).reshape(1, -1)
 
 
 def get_available_models():
@@ -151,6 +163,27 @@ def predict():
                 "is_ship": bool(proba >= 0.5)
             }
 
+        # 3. Run the proposed CPU-only HFSD-Pro pipeline when its saved model
+        # is available. Its threshold is selected from validation data.
+        hfsd_path = os.path.join(MODEL_DIR, "hfsd_pro_pipeline.joblib")
+        if os.path.exists(hfsd_path):
+            bundle = joblib.load(hfsd_path)
+            hfsd_features = extract_hfsd_pro_vector(img_np)
+            scaled_hfsd = bundle["scaler"].transform(hfsd_features)
+            weights = bundle["blend_weights"]
+            hfsd_probability = (
+                weights.get("hgb", 0.0) * bundle["models"]["hgb"].predict_proba(hfsd_features)[:, 1][0]
+                + weights.get("rf", 0.0) * bundle["models"]["rf"].predict_proba(hfsd_features)[:, 1][0]
+                + weights.get("logistic", 0.0) * bundle["models"]["logistic"].predict_proba(scaled_hfsd)[:, 1][0]
+            )
+            hfsd_threshold = float(bundle.get("threshold", 0.5))
+            predictions["HFSD-Pro (CPU)"] = {
+                "prediction": "Ship Detected" if hfsd_probability >= hfsd_threshold else "No Ship",
+                "probability": float(round(hfsd_probability * 100, 2)),
+                "is_ship": bool(hfsd_probability >= hfsd_threshold),
+                "threshold": hfsd_threshold,
+            }
+
         # 3. Best Model Consensus
         consensus_score = float(np.mean([p["probability"] for p in predictions.values()])) if predictions else 50.0
         final_prediction = "Ship Detected" if consensus_score >= 50.0 else "No Ship (Open Water / Coast)"
@@ -213,11 +246,17 @@ def predict():
 
 @app.route("/api/benchmarks", methods=["GET"])
 def get_benchmarks():
-    """Returns experiment benchmarks from experiment_results.json."""
+    """Returns traditional, CNN, and proposed-method benchmarks."""
     report_file = os.path.join(MODEL_DIR, "experiment_results.json")
     if os.path.exists(report_file):
         with open(report_file, "r") as f:
-            return jsonify(json.load(f))
+            result = {"traditional": json.load(f)}
+        for name in ("hfsd_results.json", "hfsd_pro_results.json", "cnn_results.json"):
+            path = os.path.join(MODEL_DIR, name)
+            if os.path.exists(path):
+                with open(path, "r") as f:
+                    result[name.replace(".json", "")] = json.load(f)
+        return jsonify(result)
     return jsonify({"error": "No benchmark file found. Run train_traditional.py first."}), 404
 
 
