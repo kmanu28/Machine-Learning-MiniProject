@@ -166,6 +166,26 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
     elements.append(t)
     elements.append(Spacer(1, 6))
 
+    elements.append(Paragraph("4.1 Reference Paper vs. Our Implementation", h1_style))
+    comparison_data = [
+        [Paragraph("<b>Aspect</b>", table_header_style), Paragraph("<b>Reference paper</b>", table_header_style), Paragraph("<b>Our project</b>", table_header_style)],
+        [Paragraph("Dataset", table_cell_style), Paragraph("15,000 images (7k/3k/5k)", table_cell_style), Paragraph("6,000 images (4k/1k/1k)", table_cell_style)],
+        [Paragraph("Features", table_cell_style), Paragraph("HSV, Haralick, Hu", table_cell_style), Paragraph("Same + HOG, LBP/contrast, HSV quantiles in HFSD-Pro", table_cell_style)],
+        [Paragraph("CNNs", table_cell_style), Paragraph("Simple CNN + DenseNet-169", table_cell_style), Paragraph("SIM-CNN + DenseNet-169 on fixed held-out split", table_cell_style)],
+        [Paragraph("New contribution", table_cell_style), Paragraph("Not applicable", table_cell_style), Paragraph("HFSD-Pro CPU-only tuned ensemble", table_cell_style)],
+    ]
+    comparison_table = Table(comparison_data, colWidths=[75, 205, 260])
+    comparison_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0077b6')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e1')),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#f8fafc'), colors.white]),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+    ]))
+    elements.append(comparison_table)
+
     # Page Break to ensure clean 2-page structure
     elements.append(PageBreak())
 
@@ -208,12 +228,12 @@ def build_pdf_report(output_filename: str = "report/writeup.pdf"):
     elements.append(Spacer(1, 6))
 
     hfsd_table = Table([
-        [Paragraph("<b>HFSD-Pro component</b>", table_header_style), Paragraph("<b>Implementation</b>", table_header_style)],
-        [Paragraph("Input representation", table_cell_style), Paragraph("1,259 fused features per 256x256 image", table_cell_style)],
-        [Paragraph("Feature groups", table_cell_style), Paragraph("HSV histogram, Haralick GLCM, Hu moments, fine HOG, local LBP/contrast, HSV quantiles", table_cell_style)],
-        [Paragraph("Models", table_cell_style), Paragraph("Validation-tuned HistGradientBoosting + balanced Random Forest blend", table_cell_style)],
-        [Paragraph("Final test result", table_cell_style), Paragraph("92.0% accuracy | 73.8% precision | 77.5% recall | 75.6% F1 | 93.9% ROC-AUC", table_cell_style)],
-    ], colWidths=[130, 410])
+        [Paragraph("<b>Model</b>", table_header_style), Paragraph("<b>Accuracy</b>", table_header_style), Paragraph("<b>Precision</b>", table_header_style), Paragraph("<b>Recall</b>", table_header_style), Paragraph("<b>F1</b>", table_header_style), Paragraph("<b>Role</b>", table_header_style)],
+        [Paragraph("Random Forest", table_cell_style), Paragraph("91.6%", table_cell_style), Paragraph("88.5%", table_cell_style), Paragraph("53.1%", table_cell_style), Paragraph("66.4%", table_cell_style), Paragraph("Best traditional baseline", table_cell_style)],
+        [Paragraph("SIM-CNN", table_cell_style), Paragraph("85.6%", table_cell_style), Paragraph("86.4%", table_cell_style), Paragraph("11.9%", table_cell_style), Paragraph("20.9%", table_cell_style), Paragraph("From-scratch CNN", table_cell_style)],
+        [Paragraph("DenseNet-169", table_cell_style), Paragraph("92.9%", table_cell_style), Paragraph("86.8%", table_cell_style), Paragraph("65.6%", table_cell_style), Paragraph("74.7%", table_cell_style), Paragraph("Best raw accuracy", table_cell_style)],
+        [Paragraph("HFSD-Pro", table_cell_style), Paragraph("<b>92.0%</b>", table_cell_style), Paragraph("73.8%", table_cell_style), Paragraph("<b>77.5%</b>", table_cell_style), Paragraph("<b>75.6%</b>", table_cell_style), Paragraph("Best CPU F1/recall balance", table_cell_style)],
+    ], colWidths=[75, 54, 58, 54, 45, 254])
     hfsd_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0077b6')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),

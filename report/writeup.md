@@ -94,15 +94,44 @@ The experiment used 4,000 training images, 1,000 validation images, and 1,000 he
 - **LDA:** $84.10\% \pm 0.91\%$ (Precision: $51.30\%$, Recall: $36.09\%$, F1: $41.24\%$)
 - **Naive Bayes:** $36.95\% \pm 1.58\%$ (Precision: $19.17\%$, Recall: $91.41\%$, F1: $31.68\%$)
 
-### 4.3 Key Findings
+### 4.3 Reference Paper vs. Our Implementation
 
-1. Random Forest achieved the best held-out accuracy, reaching 91.6% with color plus Haralick texture features.
-2. Raw pixel features performed worse than engineered features for Random Forest, falling from 91.6% with His+Ha to 84.7%.
-3. Accuracy alone is misleading for this imbalanced task. Random Forest recall was 54.37% with the all-feature model, so precision, recall, and F1 are reported alongside accuracy.
-4. Threshold scanning on the validation set selected 0.35 for Random Forest, improving validation F1 to 0.7898. This threshold was selected before final test reporting.
+| Aspect | Reference paper technique | Our implementation |
+|:---|:---|:---|
+| Dataset scale | 15,000-image split: 7,000 train, 3,000 development, 5,000 test | Reproducible 6,000-image split: 4,000 train, 1,000 validation, 1,000 test |
+| Traditional representation | HSV histograms, Haralick texture, and Hu moments | Same three feature families, plus HFSD-Pro HOG, local LBP/contrast, and HSV quantiles |
+| Traditional models | LDA, KNN, Naive Bayes, Random Forest, and SVM | Same five baselines, plus the HFSD-Pro tuned CPU ensemble |
+| Simple CNN | Four convolution/pooling stages trained from scratch | Same four-stage SIM-CNN trained from scratch |
+| Transfer CNN | Pretrained DenseNet-169 classification pipeline | DenseNet-169 with the same fixed split and held-out evaluation |
+| Imbalance handling | Decision-threshold scanning | Validation-only threshold tuning; test set remains untouched |
+
+### 4.4 Measured Results: Reference vs. Our Experiment
+
+The supplied paper summary reports approximately 93% Random Forest accuracy and
+94% Simple CNN accuracy. These are reference benchmarks, not copied results.
+The values below are our independent held-out test measurements:
+
+| Technique | Reference paper benchmark | Our test result | Interpretation |
+|:---|---:|---:|:---|
+| Random Forest | approximately 93% accuracy | 91.6% accuracy | Slightly lower on the smaller subset |
+| Simple CNN / SIM-CNN | approximately 94% accuracy | 85.6% accuracy, 20.9% F1 | Accuracy hides poor ship recall on our imbalanced split |
+| DenseNet-169 / TL-CNN | Transfer-learning baseline | 92.9% accuracy, 74.7% F1 | Best raw accuracy in our experiment |
+| HFSD-Pro | Not present in the paper | 92.0% accuracy, 77.5% recall, 75.6% F1 | Our original CPU-only method; best measured F1 |
+
+The comparison is fair but not numerically identical: our subset is smaller, and
+the class distribution and fixed split differ from the paper's 15,000-image
+experiment. HFSD-Pro is our contribution rather than a claim that the original
+paper used the same feature fusion or model ensemble.
+
+### 4.5 Key Findings
+
+1. DenseNet-169 achieved the highest raw accuracy in our experiment, while HFSD-Pro achieved the highest measured F1-score and recall balance.
+2. HFSD-Pro is the strongest CPU-only option because it uses engineered features and classical models instead of GPU-based neural-network training.
+3. Raw accuracy alone is misleading for this imbalanced task; SIM-CNN reached 85.6% accuracy but only 20.9% F1 because it missed most ships.
+4. All thresholds were selected using validation data before the held-out test results were reported.
 
 ---
 
 ## 5. Conclusions & Future Work
-- **Summary:** On the selected Airbus subset, Random Forest with color and Haralick features provided the strongest traditional-ML result. The results demonstrate the value of feature engineering while also showing that class imbalance makes recall and F1 essential metrics.
-- **Future Directions:** Compare these results with the Simple CNN and DenseNet-169, tune class weighting, and extend the task toward ship localization or segmentation.
+- **Summary:** DenseNet-169 gave the highest raw accuracy, while HFSD-Pro provided the strongest CPU-only F1/recall trade-off. The comparison shows why engineered features and class-imbalance-aware thresholds matter.
+- **Future Directions:** Repeat the comparison on the paper's full split, add confidence calibration, and extend the task toward ship localization or segmentation.
