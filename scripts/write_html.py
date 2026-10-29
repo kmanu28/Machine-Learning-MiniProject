@@ -561,7 +561,7 @@ html_content = """<!DOCTYPE html>
                 </div>
             </div>
             <div class="header-tags">
-                <div class="header-tag">100% RF Accuracy</div>
+                <div class="header-tag">RF 91.6% Test Accuracy</div>
                 <div class="header-tag">531 D Features</div>
                 <div class="header-tag active">
                     <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--ocean-green); margin-right:4px;"></span>

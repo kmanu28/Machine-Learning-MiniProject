@@ -4,18 +4,23 @@
 
 ---
 
-## 📌 Project Overview
-Autonomous ship detection from satellite imagery plays a pivotal role in maritime surveillance, port traffic management, disaster response, and prevention of illegal maritime activities. This repository implements and evaluates an end-to-end maritime vision pipeline that benchmarks:
+## Project overview
+
+This project studies binary ship detection in satellite image patches. It
+recreates the main feature-based experiments from the reference paper, adds
+two CPU-only feature-fusion methods, and compares them with a small CNN and a
+DenseNet-169 transfer-learning model.
+
+The repository contains:
 - **5 Traditional Machine Learning Classifiers:** Linear Discriminant Analysis (LDA), K-Nearest Neighbors (KNN), Gaussian Naive Bayes (GNB), Random Forest (RF), and Support Vector Machines (SVM with RBF kernel).
 - **Domain Feature Engineering:** 531-dimensional combined feature space comprising **Hu Invariant Moments** (shape), **HSV 3D Color Histograms** (spectral), and **Haralick Textures via GLCM** (high-frequency spatial details).
 - **Neural Network Models:** Custom CNN (`SIM-CNN`) trained from scratch and DenseNet-169 transfer CNN (`TL-CNN`). The legacy Deep MLP remains available as an optional baseline but is not part of the final headline comparison.
 - **CPU-Friendly Proposed Method:** Hybrid Feature-Fusion Ship Detector (`HFSD`) using compact HOG, spatial HSV statistics, Hu moments, HSV histograms, and Haralick texture features with a calibrated classifier ensemble.
 - **Tuned CPU Variant:** `HFSD-Pro` adds multi-scale HOG, local LBP/contrast statistics, HSV quantiles, and validation-only ensemble tuning.
-- **Interactive Live Demonstration App:** A glassmorphic web dashboard for real-time aerial patch classification, multi-model consensus, and instant feature extraction visualization.
+- **Interactive demonstration app:** A small Flask dashboard for trying the
+  trained classifiers on individual image patches.
 
----
-
-## 📂 Repository Structure
+## Repository structure
 
 ```
 mini project/
@@ -53,28 +58,36 @@ mini project/
 │   ├── hfsd_results.json          # HFSD metrics
 │   └── hfsd_pro_results.json      # HFSD-Pro metrics
 ├── templates/
-│   └── index.html                 # Modern glassmorphic Web Demo Dashboard
+│   └── index.html                 # Flask web demo dashboard
 ├── notebooks/
-│   └── Airbus_Ship_Detection_Experiments.ipynb  # Interactive experiment notebook
+│   ├── Airbus_Ship_Detection_Experiments.ipynb  # Local experiment notebook
+│   └── Airbus_Ship_Detection_Colab_Complete.ipynb # CNN/Colab notebook
 ├── report/
 │   ├── writeup.md                 # 2-Page project summary write-up (Markdown)
 │   ├── writeup.pdf                # 2-Page official PDF report (ReportLab generated)
 │   ├── presentation_slides.md     # Complete slide deck for evaluation review
 │   └── generate_pdf_writeup.py    # Automated PDF compiler
+├── references/                    # Assignment brief and paper materials
 ├── app.py                         # Live Demo Web Application server
 └── README.md                      # Documentation
 ```
 
+The full Airbus download and the generated 6,000-image working subset are
+kept out of Git. The small `data/sample_dataset` folder is included only as a
+smoke-test dataset. The Colab notebook uses the larger subset from Google
+Drive, and the local `cnn results` folder is intentionally ignored because it
+contains generated training files and model weights.
+
 ---
 
-## ⚡ Quick Start & Setup Instructions
+## Quick start
 
-### 1. Install Dependencies
+### 1. Install dependencies
 ```bash
 pip install numpy scipy scikit-learn pandas matplotlib seaborn pillow opencv-python scikit-image flask reportlab joblib
 ```
 
-### 2. Prepare a reproducible smaller subset
+### 2. Prepare the working subset
 If you have a folder containing `ships/` and `no_ships/`, create a 4,000/1,000/1,000 stratified subset:
 ```bash
 python scripts/prepare_subset.py --source /path/to/airbus_images --output data/subset_6000
@@ -106,7 +119,7 @@ For the original ZIP download, use the ZIP-aware version so the full archive is 
 ```bash
 python scripts/prepare_subset_from_zip.py --zip C:\path\to\airbus-ship-detection.zip --output data\subset_6000
 ```
-### 3. Run Complete Training & Benchmarking Pipeline
+### 3. Run the traditional benchmark
 To run the ablation study across all 8 feature combinations and 10-fold cross-validation:
 ```bash
 python src/train_traditional.py --help
@@ -114,12 +127,12 @@ python src/train_traditional.py --help
 python src/train_traditional.py
 ```
 
-### 4. Generate Diagnostic Visualizations
+### 4. Generate diagnostic visualizations
 ```bash
 python src/visualize.py
 ```
 
-### 5. Launch Live Interactive Web Demo
+### 5. Launch the demo
 Start the local demonstration dashboard:
 ```bash
 python app.py
@@ -132,7 +145,7 @@ Open your browser at **`http://127.0.0.1:5000`**. You can:
 
 ---
 
-## 📊 Experimental Results
+## Experimental results
 
 ### Table 1: Held-out test accuracy on the Airbus 6,000-image subset
 
@@ -195,9 +208,23 @@ better on raw accuracy at 92.9%, but its recall is lower at 65.6%.
 
 ---
 
-## 📄 Deliverables Summary
-1. **Source Code:** Complete modular Python codebase in `src/`, `models/`, and `app.py`.
-2. **Colab Notebook:** Run [Airbus_Ship_Detection_Colab_Complete.ipynb](notebooks/Airbus_Ship_Detection_Colab_Complete.ipynb) to train and evaluate both CNNs using the Drive subset.
-3. **Two-Page Write-up:** Available in [`report/writeup.pdf`](report/writeup.pdf) and [`report/writeup.md`](report/writeup.md).
-4. **Presentation Deck:** Available in [`report/presentation_slides.md`](report/presentation_slides.md). It covers the reference paper, our reproduction, HFSD-Pro, and the side-by-side results.
-5. **Live Demonstration:** Interactive Web Dashboard running via `python app.py`.
+## Deliverables
+
+1. **Source code:** Modular code in `src/`, `scripts/`, and `app.py`.
+2. **Colab notebook:** [Airbus_Ship_Detection_Colab_Complete.ipynb](notebooks/Airbus_Ship_Detection_Colab_Complete.ipynb) trains and evaluates both CNNs using the Drive subset.
+3. **Report:** [writeup.pdf](report/writeup.pdf) and the editable [writeup.md](report/writeup.md).
+4. **Presentation:** [presentation_slides.md](report/presentation_slides.md), covering the reference method, our reproduction, HFSD-Pro, and the comparison.
+5. **Demo:** The local dashboard launched with `python app.py`.
+
+## Reference material
+
+The assignment brief, source paper, poster, and course problem-statement
+spreadsheet are in [`references/`](references/README.md). They are included
+for traceability and are not required to run the code.
+
+## Reproducibility note
+
+The reported traditional-ML and HFSD-Pro numbers were obtained on the fixed
+6,000-image subset described above. The CNN numbers were obtained in Colab
+using the same split. Generated datasets, caches, and CNN weights remain
+local or in Google Drive rather than being committed to this repository.
